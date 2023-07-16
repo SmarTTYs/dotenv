@@ -1,0 +1,44 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+$dokka.location:io.github.smarttys.dotenv.exception////PointingToDeclaration/dotenv/io.github.smarttys.dotenv.exception/index.html
+$dokka.location:io.github.smarttys.dotenv.exception/DotEnvException///PointingToDeclaration/dotenv/io.github.smarttys.dotenv.exception/-dot-env-exception/index.html
+$dokka.location:io.github.smarttys.dotenv.exception/DotEnvException/message/#/PointingToDeclaration/dotenv/io.github.smarttys.dotenv.exception/-dot-env-exception/message.html
+$dokka.location:io.github.smarttys.dotenv.exception/InvalidKeyFormatException///PointingToDeclaration/dotenv/io.github.smarttys.dotenv.exception/-invalid-key-format-exception/index.html
+$dokka.location:io.github.smarttys.dotenv.exception/InvalidSubstitutionException///PointingToDeclaration/dotenv/io.github.smarttys.dotenv.exception/-invalid-substitution-exception/index.html
+$dokka.location:io.github.smarttys.dotenv.exception/InvalidSubstitutionException/message/#/PointingToDeclaration/dotenv/io.github.smarttys.dotenv.exception/-invalid-substitution-exception/message.html
+$dokka.location:io.github.smarttys.dotenv.exception/MissingEnvFileException///PointingToDeclaration/dotenv/io.github.smarttys.dotenv.exception/-missing-env-file-exception/index.html
+$dokka.location:io.github.smarttys.dotenv////PointingToDeclaration/dotenv/io.github.smarttys.dotenv/index.html
+$dokka.location:io.github.smarttys.dotenv//DotEnv/#kotlin.Function1[io.github.smarttys.dotenv.DotEnvBuilder,kotlin.Unit]/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env.html
+$dokka.location:io.github.smarttys.dotenv//DotEnv/#kotlin.String/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env.html
+$dokka.location:io.github.smarttys.dotenv//LoadEnv/#kotlin.Boolean#kotlin.Function1[io.github.smarttys.dotenv.DotEnvBuilder,kotlin.Unit]/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-load-env.html
+$dokka.location:io.github.smarttys.dotenv//LoadEnv/#kotlin.String#kotlin.Boolean/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-load-env.html
+$dokka.location:io.github.smarttys.dotenv//getValue/io.github.smarttys.dotenv.DotEnv#kotlin.Any?#kotlin.reflect.KProperty[*]/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/get-value.html
+$dokka.location:io.github.smarttys.dotenv//minus/io.github.smarttys.dotenv.DotEnv#io.github.smarttys.dotenv.DotEnv/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/minus.html
+$dokka.location:io.github.smarttys.dotenv//plus/io.github.smarttys.dotenv.DotEnv#io.github.smarttys.dotenv.DotEnv/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/plus.html
+$dokka.location:io.github.smarttys.dotenv//write/io.github.smarttys.dotenv.DotEnv#kotlin.String/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/write.html
+$dokka.location:io.github.smarttys.dotenv/DotEnv.Companion///PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env/-companion/index.html
+$dokka.location:io.github.smarttys.dotenv/DotEnv.Companion/DEFAULT/#/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env/-companion/-d-e-f-a-u-l-t.html
+$dokka.location:io.github.smarttys.dotenv/DotEnv///PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env/index.html
+$dokka.location:io.github.smarttys.dotenv/DotEnv/contains/#kotlin.String/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env/contains.html
+$dokka.location:io.github.smarttys.dotenv/DotEnv/get/#kotlin.String#kotlin.Function1[kotlin.String,TypeParam(bounds=[kotlin.Any?])]/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env/get.html
+$dokka.location:io.github.smarttys.dotenv/DotEnv/get/#kotlin.String/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env/get.html
+$dokka.location:io.github.smarttys.dotenv/DotEnv/getOrElse/#kotlin.String#kotlin.Function0[kotlin.String]/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env/get-or-else.html
+$dokka.location:io.github.smarttys.dotenv/DotEnv/getOrThrow/#kotlin.String/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env/get-or-throw.html
+$dokka.location:io.github.smarttys.dotenv/DotEnv/iterator/#/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env/iterator.html
+$dokka.location:io.github.smarttys.dotenv/DotEnv/loadIntoSystemEnvironment/#kotlin.Boolean/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env/load-into-system-environment.html
+$dokka.location:io.github.smarttys.dotenv/DotEnvBuilder///PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env-builder/index.html
+$dokka.location:io.github.smarttys.dotenv/DotEnvBuilder/decodeBlankValues/#/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env-builder/decode-blank-values.html
+$dokka.location:io.github.smarttys.dotenv/DotEnvBuilder/directory/#/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env-builder/directory.html
+$dokka.location:io.github.smarttys.dotenv/DotEnvBuilder/file/#kotlin.String/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env-builder/file.html
+$dokka.location:io.github.smarttys.dotenv/DotEnvBuilder/files/#kotlin.Array[kotlin.String]/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env-builder/files.html
+$dokka.location:io.github.smarttys.dotenv/DotEnvBuilder/ignoreDuplicateKeys/#/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env-builder/ignore-duplicate-keys.html
+$dokka.location:io.github.smarttys.dotenv/DotEnvBuilder/ignoreMalformedKeys/#/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env-builder/ignore-malformed-keys.html
+$dokka.location:io.github.smarttys.dotenv/DotEnvBuilder/ignoreMalformedSubstitution/#/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env-builder/ignore-malformed-substitution.html
+$dokka.location:io.github.smarttys.dotenv/DotEnvBuilder/ignoreMissingFile/#/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env-builder/ignore-missing-file.html
+$dokka.location:io.github.smarttys.dotenv/DotEnvBuilder/includeSystemEnvironment/#/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env-builder/include-system-environment.html
+$dokka.location:io.github.smarttys.dotenv/DotEnvBuilder/lenientKeyParsing/#/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env-builder/lenient-key-parsing.html
+$dokka.location:io.github.smarttys.dotenv/DotEnvBuilder/overloadSystemEnvironment/#/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env-builder/overload-system-environment.html
+$dokka.location:io.github.smarttys.dotenv/DotEnvBuilder/overwriteExistingSystemVariables/#/PointingToDeclaration/dotenv/io.github.smarttys.dotenv/-dot-env-builder/overwrite-existing-system-variables.html
+io.github.smarttys.dotenv
+io.github.smarttys.dotenv.exception
+
