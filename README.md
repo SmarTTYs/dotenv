@@ -3,6 +3,7 @@
 A Kotlin/Multiplatform library to load environment variables from a **.env** file
 inspired by the Ruby [dotenv](https://github.com/bkeepers/dotenv) project
 and the environment file handling in [docker-compose](https://docs.docker.com/compose/environment-variables/env-file/).
+For more information check out our [api documentation](https://smarttys.github.io/dotenv/)
 
 Why using .env files? From the original library:
 > Storing configuration in the environment is one of the tenets of a
