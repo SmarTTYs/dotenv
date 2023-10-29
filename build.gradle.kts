@@ -148,6 +148,10 @@ koverReport {
     }
 }
 
+val javadocJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("javadoc")
+}
+
 publishing {
     repositories {
         // System.getenv("libs.repository.id")
@@ -163,10 +167,13 @@ publishing {
     publications {
         val version: String by rootProject
         val group: String by rootProject
+
         create<MavenPublication>("maven") {
             this.version = version
             this.groupId = group
             this.artifactId = project.name
+
+            artifact(javadocJar.get())
 
             /**
              * Configure maven pom
