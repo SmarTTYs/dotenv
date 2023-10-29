@@ -1,6 +1,4 @@
-import com.github.javaparser.resolution.types.ResolvedLambdaConstraintType.bound
 import org.jetbrains.dokka.gradle.DokkaTask
-// import org.jetbrains.dokka.gradle.DokkaTask
 import java.net.URL
 
 @Suppress("DSL_SCOPE_VIOLATION")
@@ -23,21 +21,31 @@ repositories {
     mavenCentral()
 }
 
+tasks.wrapper {
+    gradleVersion = "8.4"
+}
+
 kotlin {
+    jvmToolchain(11)
     jvm {
+        /*
         compilations.all {
             kotlinOptions.jvmTarget = "1.8"
         }
         withJava()
+        */
+
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
         }
     }
     js(IR) {
         nodejs {
-            testTask {
-                environment("TEST", "TEST")
-            }
+            testTask(
+                Action {
+                    environment("TEST", "TEST")
+                }
+            )
         }
         // browser()
         /*
@@ -116,7 +124,7 @@ tasks.withType<DokkaTask> {
 koverReport {
     defaults {
         html {
-            title = "My report title"
+            title = "DotEnv HTML Report"
             onCheck = false
             setReportDir(layout.buildDirectory.dir("kover-reports/html-result"))
         }
