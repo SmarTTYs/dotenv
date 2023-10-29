@@ -23,7 +23,7 @@ import io.github.smarttys.dotenv.internal.readEnvironmentMap
  * }
  * ```
  */
-inline fun DotEnv(builderAction: DotEnvBuilder.() -> Unit): DotEnv {
+public inline fun DotEnv(builderAction: DotEnvBuilder.() -> Unit): DotEnv {
     val dotEnvBuilder = DotEnvBuilder().apply(builderAction)
     return dotEnvBuilder.build()
 }
@@ -37,7 +37,7 @@ inline fun DotEnv(builderAction: DotEnvBuilder.() -> Unit): DotEnv {
  *
  */
 @Suppress("FunctionName")
-inline fun LoadEnv(overwrite: Boolean = true, builderAction: DotEnvBuilder.() -> Unit) {
+public inline fun LoadEnv(overwrite: Boolean = true, builderAction: DotEnvBuilder.() -> Unit) {
     val dotEnvBuilder = DotEnvBuilder().apply(builderAction)
     dotEnvBuilder.load(overwrite)
 }
@@ -49,7 +49,7 @@ inline fun LoadEnv(overwrite: Boolean = true, builderAction: DotEnvBuilder.() ->
  * @param [filePath] for the .env file
  * @return [DotEnv] instance with the configured [filePath].
  */
-inline fun DotEnv(filePath: String): DotEnv = DotEnv {
+public fun DotEnv(filePath: String): DotEnv = DotEnv {
     file(filePath)
 }
 
@@ -61,14 +61,14 @@ inline fun DotEnv(filePath: String): DotEnv = DotEnv {
  * the used platform.
  * */
 @Suppress("FunctionName")
-inline fun LoadEnv(filePath: String, overwrite: Boolean = true) = LoadEnv(overwrite) {
+public fun LoadEnv(filePath: String, overwrite: Boolean = true): Unit = LoadEnv(overwrite) {
     file(filePath)
 }
 
 /**
  * Builder of the [DotEnv] instance provided by `DotEnv { ... }` factory function.
  */
-class DotEnvBuilder @PublishedApi internal constructor() {
+public class DotEnvBuilder @PublishedApi internal constructor() {
     /**
      * List of filenames this dotenv implementation should
      * read from
@@ -84,7 +84,7 @@ class DotEnvBuilder @PublishedApi internal constructor() {
      *
      * `false` by default
      */
-    var ignoreMissingFile = false
+    public var ignoreMissingFile: Boolean = false
 
     /**
      * Specifies whether encounters of malformed kes in the input .env file should
@@ -92,7 +92,7 @@ class DotEnvBuilder @PublishedApi internal constructor() {
      *
      * `false` by default.
      */
-    var ignoreMalformedKeys = false
+    public var ignoreMalformedKeys: Boolean = false
 
     /**
      * Specifies whether key parsing should be lenient.
@@ -102,7 +102,7 @@ class DotEnvBuilder @PublishedApi internal constructor() {
      *
      * 'false' by default
      */
-    var lenientKeyParsing = false
+    public var lenientKeyParsing: Boolean = false
 
     /**
      * Specifies whether encounters of duplicated keys in the input .env file should
@@ -113,7 +113,7 @@ class DotEnvBuilder @PublishedApi internal constructor() {
      *
      * `false` by default.
      */
-    var ignoreDuplicateKeys = false
+    public var ignoreDuplicateKeys: Boolean = false
 
     /**
      * Specifies whether encounters of malformed substitutions should be ignored.
@@ -123,7 +123,7 @@ class DotEnvBuilder @PublishedApi internal constructor() {
      *
      * `false` by default.
      */
-    var ignoreMalformedSubstitution = false
+    public var ignoreMalformedSubstitution: Boolean = false
 
     /**
      * Specifies whether to ignore blank values and do not include them into
@@ -134,7 +134,7 @@ class DotEnvBuilder @PublishedApi internal constructor() {
      *
      * `true` by default
      */
-    var decodeBlankValues = true
+    public var decodeBlankValues: Boolean = true
 
     /**
      * Specifies whether the created [DotEnv] entries should get load into
@@ -151,7 +151,7 @@ class DotEnvBuilder @PublishedApi internal constructor() {
      *
      *  `false` by default
      */
-    var overloadSystemEnvironment = false
+    public var overloadSystemEnvironment: Boolean = false
 
     /**
      * Specifies whether to overwrite already existing system variables when
@@ -162,7 +162,7 @@ class DotEnvBuilder @PublishedApi internal constructor() {
      *
      * 'true' by default
      */
-    var overwriteExistingSystemVariables = true
+    public var overwriteExistingSystemVariables: Boolean = true
 
     /**
      * Specifies whether the current system environment should be included
@@ -177,20 +177,20 @@ class DotEnvBuilder @PublishedApi internal constructor() {
      *
      * 'false' by default
      */
-    var includeSystemEnvironment = false
+    public var includeSystemEnvironment: Boolean = false
 
     /**
      * Specifies the base directory to search .env files in.
      *
      * `./` by default.
      */
-    var directory = "./"
+    public var directory: String = "./"
         set(value) {
             field = value.removeSuffix("/") + "/"
         }
 
-    fun file(fileName: String) = apply { files.add(fileName) }
-    fun files(vararg fileNames: String) = apply { files.addAll(fileNames) }
+    public fun file(fileName: String): DotEnvBuilder = apply { files.add(fileName) }
+    public fun files(vararg fileNames: String): DotEnvBuilder = apply { files.addAll(fileNames) }
 
     @PublishedApi internal fun build(): DotEnv {
         val envMap = parseInput()

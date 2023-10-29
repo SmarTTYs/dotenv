@@ -16,7 +16,7 @@ private const val DOUBLE_QUOTE_PREFIX = '"'.code.toByte()
 internal const val DEFAULT_KEY_SEPARATION_MARKER = '='.code.toByte()
 internal const val YAML_STYLE_KEY_SEPARATION_MARKER = ':'.code.toByte()
 
-internal inline fun Byte.isWhitespace() = this.toInt().toChar().isWhitespace()
+internal fun Byte.isWhitespace() = this.toInt().toChar().isWhitespace()
 
 /**
  * Whether this [Byte] is a line end / line separator
