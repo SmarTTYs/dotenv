@@ -1,9 +1,9 @@
 [versions]
-kotlin-version = "1.8.22"
-ktlint-version = "11.0.0"
-detekt-version = "1.22.0"
-dokka-version = "1.8.20"
-kover-version = "0.7.2" # update to newest kover version
+kotlin-version = "1.9.10"
+ktlint-version = "11.6.1"
+detekt-version = "1.23.1"
+dokka-version = "1.9.10"
+kover-version = "0.7.4"
 
 [plugins]
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint-version" }
