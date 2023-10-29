@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.dokka)
 
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.binary.compatibility.validator)
 
     signing
     `maven-publish`
@@ -26,12 +27,21 @@ tasks.wrapper {
 }
 
 kotlin {
+    /**
+     * Global settings
+     */
+    this.explicitApiWarning()
+    targets.all {
+        compilations.all {
+            compilerOptions.configure {
+                allWarningsAsErrors = true
+            }
+        }
+    }
+
     jvmToolchain(11)
     jvm {
         /*
-        compilations.all {
-            kotlinOptions.jvmTarget = "1.8"
-        }
         withJava()
         */
 
