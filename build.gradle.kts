@@ -147,3 +147,86 @@ koverReport {
         }
     }
 }
+
+publishing {
+    repositories {
+        // System.getenv("libs.repository.id")
+        maven("https://maven.pkg.github.com/SmarTTYs/dotenv") {
+            name = "GitHubPackages"
+            credentials {
+                username = getSensitiveProperty("GITHUB_ACTOR")
+                password = getSensitiveProperty("GITHUB_TOKEN")
+            }
+        }
+    }
+
+    publications {
+        val version: String by rootProject
+        val group: String by rootProject
+        create<MavenPublication>("maven") {
+            this.version = version
+            this.groupId = group
+            this.artifactId = project.name
+
+            /**
+             * Configure maven pom
+             */
+            pom {
+                configureMavenMetaData(project)
+            }
+
+            /**
+             * Apply signing
+             */
+            signPublicationIfKeyPresent(project, this)
+        }
+    }
+}
+
+fun MavenPom.configureMavenMetaData(project: Project) {
+    name by project.name
+    description by "Kotlin multiplatform library to load environment variables from .env files"
+    url by "https://github.com/SmarTTYs/dotenv"
+
+    licenses {
+        license {
+            name by "The Apache Software License, Version 2.0"
+            url by "https://www.apache.org/licenses/LICENSE-2.0.txt"
+            distribution by "repo"
+        }
+    }
+
+    developers {
+        developer {
+            id by "SmarTTYs"
+            name by "SmarTTYs"
+            url by "https://github.com/SmarTTYs/"
+        }
+    }
+
+    scm {
+        url by "https://github.com/SmarTTYs/dotenv"
+        connection by "scm:git:git://github.com/SmarTTYs/dotenv.git"
+        developerConnection by "scm:git:git@github.com:SmarTTYs/dotenv.git"
+    }
+}
+
+fun signPublicationIfKeyPresent(project: Project, publication: MavenPublication) {
+    val keyId = project.getSensitiveProperty("libs.sign.key.id")
+    val signingKey = project.getSensitiveProperty("libs.sign.key.private")
+    val signingKeyPassphrase = project.getSensitiveProperty("libs.sign.passphrase")
+    if (!signingKey.isNullOrBlank()) {
+        project.extensions.configure<SigningExtension>("signing") {
+            useInMemoryPgpKeys(keyId, signingKey, signingKeyPassphrase)
+            sign(publication)
+        }
+    }
+}
+
+infix fun <T> Property<T>.by(value: T) {
+    set(value)
+}
+
+fun Project.getSensitiveProperty(name: String): String? {
+    return project.findProperty(name) as? String ?: System.getenv(name)
+}
