@@ -203,6 +203,11 @@ fun MavenPom.configureMavenMetaData(project: Project) {
         }
     }
 
+    issueManagement {
+        system.set("Github")
+        url.set("https://github.com/SmarTTYs/dotenv/issues")
+    }
+
     developers {
         developer {
             id by "SmarTTYs"
