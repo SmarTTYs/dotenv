@@ -1,6 +1,6 @@
 package io.github.smarttys.dotenv.exception
 
-class InvalidKeyFormatException internal constructor(message: String) : DotEnvException(message)
+public class InvalidKeyFormatException internal constructor(message: String) : DotEnvException(message)
 
 internal typealias KeyFormatErrorCode = Int
 
