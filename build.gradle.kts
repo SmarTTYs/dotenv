@@ -1,7 +1,8 @@
 import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import java.net.URL
 
-@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
@@ -31,54 +32,38 @@ kotlin {
      * Global settings
      */
     this.explicitApiWarning()
-    targets.all {
-        compilations.all {
-            compilerOptions.configure {
-                allWarningsAsErrors = true
-            }
-        }
+
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    compilerOptions {
+        allWarningsAsErrors = true
     }
 
     jvmToolchain(11)
-    jvm {
-        /*
-        withJava()
-        */
 
+    jvm {
+        withJava()
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
         }
     }
-    js(IR) {
-        nodejs {
-            testTask(
-                Action {
-                    environment("TEST", "TEST")
-                }
-            )
-        }
-        // browser()
-        /*
-        browser {
-            testTask {
-                useMocha()
-                /*
-                useKarma {
-                    useChromeHeadless()
-                    useFirefox()
-                }
-                */
-            }
-            /*
-            commonWebpackConfig {
-            }
-            */
-        }
 
-         */
+    js(KotlinJsCompilerType.IR) {
+        nodejs {
+            testTask {
+                environment("TEST", "TEST")
+            }
+        }
 
         binaries.executable()
     }
+
+    /*
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        nodejs()
+    }
+    */
+
     val hostOs = System.getProperty("os.name")
     val isMingwX64 = hostOs.startsWith("Windows")
     val nativeTarget = when {
@@ -88,7 +73,6 @@ kotlin {
         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
     }
 
-    @Suppress("UNUSED_VARIABLE")
     sourceSets {
         val commonMain by getting
         val commonTest by getting {
