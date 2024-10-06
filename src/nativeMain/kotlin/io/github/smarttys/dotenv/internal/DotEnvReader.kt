@@ -1,32 +1,21 @@
 package io.github.smarttys.dotenv.internal
 
-import io.github.smarttys.dotenv.EnvMap
-import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.get
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.readBytes
-import kotlinx.cinterop.toKString
-import platform.posix.SEEK_END
-import platform.posix.environ
-import platform.posix.fclose
-import platform.posix.fopen
-import platform.posix.fread
-import platform.posix.fseek
-import platform.posix.ftell
-import platform.posix.rewind
-import platform.windows.byteVar
+import kotlinx.cinterop.*
+import platform.posix.*
 
+@OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 internal actual fun readFile(filePath: String): ByteArray? {
     val file = fopen(filePath, "r") ?: return null
 
     try {
         memScoped {
             fseek(file, 0, SEEK_END)
-            val fileLen = ftell(file)
+            @Suppress("RemoveRedundantCallsOfConversionMethods")
+            val fileLen = ftell(file).toInt()
             rewind(file)
 
-            val buffer = allocArray<byteVar>(fileLen)
-            fread(buffer, fileLen.toULong(), 1, file)
+            val buffer = allocArray<ByteVar>(fileLen)
+            fread(buffer, fileLen.toUInt(), 1u, file)
 
             return buffer.readBytes(fileLen)
         }
@@ -35,8 +24,13 @@ internal actual fun readFile(filePath: String): ByteArray? {
     }
 }
 
+/*
+@OptIn(ExperimentalForeignApi::class)
+internal expect val environmentPointer: CPointer<CPointerVar<ByteVar>>?
+
+@OptIn(ExperimentalForeignApi::class)
 internal actual fun readEnvironmentMap(): EnvMap {
-    val environment = environ ?: return emptyMap()
+    val environment = environmentPointer ?: return emptyMap()
 
     var index = 0
     val envMap = mutableMapOf<String, String>()
@@ -48,3 +42,4 @@ internal actual fun readEnvironmentMap(): EnvMap {
 
     return envMap
 }
+*/

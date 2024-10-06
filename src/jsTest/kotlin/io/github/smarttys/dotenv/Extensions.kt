@@ -4,7 +4,7 @@ import io.github.smarttys.dotenv.internal.fs
 import io.github.smarttys.dotenv.internal.get
 import io.github.smarttys.dotenv.internal.process
 
-private const val NODE_JS_SUFFIX = "\\build\\js\\node_modules\\mocha\\bin"
+private const val NODE_JS_SUFFIX = "/build/js/node_modules/mocha/bin"
 
 actual fun readFromSystem(key: String): String? = process.env[key]
 actual fun checkFileExistsAndRemove(filePath: String): Boolean {
@@ -20,5 +20,6 @@ actual fun extractTestFilePath(originalPath: String): String {
     val transformedPath = originalPath.removePrefix(".")
     val testInstancePath = js("require('path').dirname(require.main.filename)") as String
 
-    return (testInstancePath.removeSuffix(NODE_JS_SUFFIX) + transformedPath)
+    val updatedInstancePath = testInstancePath.removeSuffix(NODE_JS_SUFFIX)
+    return updatedInstancePath + transformedPath
 }

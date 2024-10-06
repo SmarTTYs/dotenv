@@ -1,14 +1,11 @@
 package io.github.smarttys.dotenv
 
+import io.github.smarttys.dotenv.internal.*
 import io.github.smarttys.dotenv.internal.DotEnvParser
-import io.github.smarttys.dotenv.internal.DotEnvReader
 import io.github.smarttys.dotenv.internal.loadEnvironmentToSystem
 import io.github.smarttys.dotenv.internal.marshallAndWriteEnvToFile
 import kotlin.reflect.KProperty
 
-/**
- *
- */
 internal typealias EnvMap = Map<String, String>
 
 /**
@@ -47,7 +44,9 @@ public sealed class DotEnv {
      * Returns the value for given [key], or throws an [NoSuchElementException] if no
      * such key is present.
      */
-    public fun getOrThrow(key: String): String = get(key) ?: throwNoSuchElementException(key)
+    public fun getOrThrow(key: String): String = requireNotNull(get(key)) {
+        "Key $key is missing in this DotEnv instance!"
+    }
 
     /**
      * Returns the value for the given [key] if the value is present. Otherwise, returns
@@ -68,10 +67,8 @@ public sealed class DotEnv {
         internal val DEFAULT_FILE_LIST get() = listOf(DEFAULT_ENV_FILE_NAME)
 
         public val DEFAULT: DotEnv by lazy(LazyThreadSafetyMode.NONE) {
-            val reader = DotEnvReader(DEFAULT_FILE_LIST, false)
             val parser = DotEnvParser(
                 lenientKeyParsing = false,
-                ignoreMalformedKeys = false,
                 ignoreDuplicateKeys = false,
                 decodeBlankValues = true,
                 ignoreMalformedSubstitution = false,
@@ -79,7 +76,9 @@ public sealed class DotEnv {
                 systemEnvironmentMap = emptyMap()
             )
 
-            DotEnvImpl(parser.parse(reader.readInputBytes()))
+            // safe call as we do not allow missing files
+            val fileBytes = requireNotNull(readInputFile(DEFAULT_ENV_FILE_NAME, ignoreMissingFile = false))
+            DotEnvImpl(parser.parse(fileBytes))
         }
     }
 }
@@ -140,6 +139,3 @@ private fun String.camelToUpperSnakeCase() = fold(StringBuilder(length shl 1)) {
         acc.append(char)
     } else acc.append(char.uppercaseChar())
 }.toString()
-
-private fun throwNoSuchElementException(key: String): Nothing =
-    throw NoSuchElementException("Key $key is missing in this DotEnv instance!")

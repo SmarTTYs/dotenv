@@ -1,6 +1,6 @@
 package io.github.smarttys.dotenv
 
-import io.github.smarttys.dotenv.exception.InvalidSubstitutionException
+import io.github.smarttys.dotenv.exception.DotEnvException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -85,26 +85,26 @@ class TestParameterSubstitution {
         assertTrue {
             val exception = result.exceptionOrNull() ?: return@assertTrue false
             val validMessage = exception.message?.startsWith("Expected closing curly braces") == true
-            InvalidSubstitutionException::class.isInstance(exception) && validMessage
+            DotEnvException::class.isInstance(exception) && validMessage
         }
 
         val unknownOperatorResult = substitutionDotEnvCatching("unknown_substitution_operator.env")
         assertTrue {
             val exception = unknownOperatorResult.exceptionOrNull() ?: return@assertTrue false
             val validMessage = exception.message?.startsWith("Unknown operator") == true
-            InvalidSubstitutionException::class.isInstance(exception) && validMessage
+            DotEnvException::class.isInstance(exception) && validMessage
         }
 
         val invalidSubstringSubstitution = substitutionDotEnvCatching("invalid_substring_substitution.env")
         assertTrue {
             val exception = invalidSubstringSubstitution.exceptionOrNull() ?: return@assertTrue false
-            InvalidSubstitutionException::class.isInstance(exception)
+            DotEnvException::class.isInstance(exception)
         }
 
         val errorSubstitution = substitutionDotEnvCatching("error_substitution.env")
         assertTrue {
             val exception = errorSubstitution.exceptionOrNull() ?: return@assertTrue false
-            InvalidSubstitutionException::class.isInstance(exception)
+            DotEnvException::class.isInstance(exception)
         }
     }
 

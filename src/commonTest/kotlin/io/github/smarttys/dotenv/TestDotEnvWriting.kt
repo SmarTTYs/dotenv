@@ -1,6 +1,7 @@
 package io.github.smarttys.dotenv
 
 import io.github.smarttys.dotenv.internal.readEnvironmentMap
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -9,14 +10,20 @@ class TestDotEnvWriting {
 
     @Test
     fun testWritingDefaultEnvFile() {
-        val filePath = "assets/test.native.env"
+        fun randomName(): String {
+            val base = "test.native.env"
+            val suffix = (0..10).joinToString {
+                Random.nextInt().toString()
+            }
+            return base + "_" + suffix
+        }
+
+        val filePath = "assets/${randomName()}"
         val dotEnv = DotEnv {
             testDirectory = "./assets/"
             file("plain.env")
 
             ignoreDuplicateKeys = true
-            ignoreMalformedKeys = true
-
             ignoreMalformedSubstitution = true
         }
 

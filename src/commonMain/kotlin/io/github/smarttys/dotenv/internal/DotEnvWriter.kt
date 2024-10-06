@@ -27,5 +27,6 @@ private fun String.doubleQuoteEscape(): String = buildString(length shl 1) {
     }
 }
 
-internal fun throwFileOpenException(filePath: String): Nothing =
-    throw IllegalArgumentException("There was an exception while opening/creating output file $filePath!")
+internal fun throwFileOpenException(filePath: String): Nothing {
+    error("There was an exception while opening/creating output file $filePath!")
+}

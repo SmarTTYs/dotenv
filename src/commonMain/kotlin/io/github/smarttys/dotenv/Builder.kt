@@ -1,9 +1,8 @@
 package io.github.smarttys.dotenv
 
 import io.github.smarttys.dotenv.exception.DotEnvException
-import io.github.smarttys.dotenv.exception.InvalidSubstitutionException
+import io.github.smarttys.dotenv.internal.*
 import io.github.smarttys.dotenv.internal.DotEnvParser
-import io.github.smarttys.dotenv.internal.DotEnvReader
 import io.github.smarttys.dotenv.internal.loadEnvironmentToSystem
 import io.github.smarttys.dotenv.internal.readEnvironmentMap
 
@@ -49,8 +48,9 @@ public inline fun LoadEnv(overwrite: Boolean = true, builderAction: DotEnvBuilde
  * @param [filePath] for the .env file
  * @return [DotEnv] instance with the configured [filePath].
  */
-public fun DotEnv(filePath: String): DotEnv = DotEnv {
+public fun DotEnv(filePath: String, vararg filesPaths: String): DotEnv = DotEnv {
     file(filePath)
+    files(*filesPaths)
 }
 
 /**
@@ -61,8 +61,11 @@ public fun DotEnv(filePath: String): DotEnv = DotEnv {
  * the used platform.
  * */
 @Suppress("FunctionName")
-public fun LoadEnv(filePath: String, overwrite: Boolean = true): Unit = LoadEnv(overwrite) {
-    file(filePath)
+public fun LoadEnv(filePath: String, vararg filePaths: String, overwrite: Boolean = true) {
+    LoadEnv(overwrite) {
+        file(filePath)
+        files(*filePaths)
+    }
 }
 
 /**
@@ -87,18 +90,15 @@ public class DotEnvBuilder @PublishedApi internal constructor() {
     public var ignoreMissingFile: Boolean = false
 
     /**
-     * Specifies whether encounters of malformed kes in the input .env file should
-     * be ignored instead of throwing [DotEnvException].
-     *
-     * `false` by default.
-     */
-    public var ignoreMalformedKeys: Boolean = false
-
-    /**
      * Specifies whether key parsing should be lenient.
      *
      * Lenient key parsing allows all characters outside the normally permitted
-     * character set except for line breaks to be used in variable keys.
+     * character set except for line breaks to be used in variable keys as well
+     * as digits and underscores at the start of the variable name.
+     *
+     * NOTE: empty keys will still throw an exception as multiple tools do not
+     * properly handle empty keys and because it should be discouraged to use
+     * them at all.
      *
      * 'false' by default
      */
@@ -119,7 +119,7 @@ public class DotEnvBuilder @PublishedApi internal constructor() {
      * Specifies whether encounters of malformed substitutions should be ignored.
      *
      * When this flag is disabled a malformed substitution will
-     * throw a [InvalidSubstitutionException].
+     * throw a [DotEnvException].
      *
      * `false` by default.
      */
@@ -209,11 +209,10 @@ public class DotEnvBuilder @PublishedApi internal constructor() {
 
     private fun parseInput(): EnvMap {
         val systemEnvMap = readEnvironmentMap()
-        val reader = DotEnvReader(directory, files, ignoreMissingFile, systemEnvMap)
+        val filenamesOrDefault = getExpandedFilePaths(directory, files, systemEnvMap)
 
         val parser = DotEnvParser(
             lenientKeyParsing,
-            ignoreMalformedKeys,
             ignoreDuplicateKeys,
             decodeBlankValues,
             ignoreMalformedSubstitution,
@@ -221,6 +220,7 @@ public class DotEnvBuilder @PublishedApi internal constructor() {
             systemEnvMap
         )
 
-        return parser.parse(reader.readInputBytes())
+        val combinedEnv = parser.parse(filenamesOrDefault, ignoreMissingFile)
+        return combinedEnv
     }
 }
