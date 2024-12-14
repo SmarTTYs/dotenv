@@ -19,6 +19,7 @@ plugins {
     id("kover-conventions")
     id("dokka-conventions")
 }
+
 group = "io.github.smarttys"
 version = "0.1.0"
 
