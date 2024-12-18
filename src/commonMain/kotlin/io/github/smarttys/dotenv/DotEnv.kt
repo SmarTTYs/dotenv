@@ -4,6 +4,8 @@ import io.github.smarttys.dotenv.internal.*
 import io.github.smarttys.dotenv.internal.DotEnvParser
 import io.github.smarttys.dotenv.internal.loadEnvironmentToSystem
 import io.github.smarttys.dotenv.internal.marshallAndWriteEnvToFile
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 import kotlin.reflect.KProperty
 
 internal typealias EnvMap = Map<String, String>
@@ -44,7 +46,7 @@ public sealed class DotEnv {
      * Returns the value for given [key], or throws an [NoSuchElementException] if no
      * such key is present.
      */
-    public fun getOrThrow(key: String): String = requireNotNull(get(key)) {
+    public fun getOrThrow(key: String): String = requireValue(get(key)) {
         "Key $key is missing in this DotEnv instance!"
     }
 
@@ -139,3 +141,18 @@ private fun String.camelToUpperSnakeCase() = fold(StringBuilder(length shl 1)) {
         acc.append(char)
     } else acc.append(char.uppercaseChar())
 }.toString()
+
+@OptIn(ExperimentalContracts::class)
+private inline fun <T : Any> requireValue(value: T?, lazyMessage: () -> Any): T {
+    contract {
+        returns() implies (value != null)
+    }
+
+    if (value == null) {
+        val message = lazyMessage()
+        throw NoSuchElementException(message.toString())
+    } else {
+        return value
+    }
+}
+
