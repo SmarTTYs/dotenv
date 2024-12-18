@@ -66,6 +66,14 @@ kotlin {
     linuxArm64()
     mingwX64()
 
+    iosX64()
+    iosArm64()
+    watchosArm32()
+    macosArm64()
+    macosX64()
+    tvosX64()
+    tvosArm64()
+
     // setup tests running in RELEASE mode
     targets.withType<KotlinNativeTarget>().configureEach {
         binaries.test(listOf(NativeBuildType.RELEASE))
