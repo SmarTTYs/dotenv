@@ -12,12 +12,11 @@ class TestDotEnvReading {
 
     @Test
     fun example() {
-        val dotEnv = DotEnv {
+        val dotEnv = DotEnv("weird_example.env", "weird_example_2.env") {
             lenientKeyParsing = true
             ignoreMalformedSubstitution = true
 
             testDirectory = "./assets/"
-            files("weird_example.env", "weird_example_2.env")
         }
         println(dotEnv.envMap)
         println(dotEnv.envMap.values)
@@ -62,9 +61,6 @@ class TestDotEnvReading {
 
         val nonOverwritingDotEnv = DotEnv {
             testDirectory = "./assets/"
-            overloadSystemEnvironment = true
-            overwriteExistingSystemVariables = false
-
             file("plain.env")
         }
 

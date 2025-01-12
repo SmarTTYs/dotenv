@@ -3,7 +3,6 @@ package io.github.smarttys.dotenv
 import io.github.smarttys.dotenv.exception.DotEnvException
 import io.github.smarttys.dotenv.internal.*
 import io.github.smarttys.dotenv.internal.DotEnvParser
-import io.github.smarttys.dotenv.internal.loadEnvironmentToSystem
 import io.github.smarttys.dotenv.internal.readEnvironmentMap
 
 /**
@@ -28,17 +27,15 @@ public inline fun DotEnv(builderAction: DotEnvBuilder.() -> Unit): DotEnv {
 }
 
 /**
- * Loads all environment variables found for the configuration based on
- * the given [builderAction] into the "system environment".
+ * Creates an instance of [DotEnv] for the provided [filePath] without
+ * any changes to the default configuration.
  *
- * Note that "system environment" has different meanings based on
- * the used platform.
- *
+ * @return [DotEnv] instance with the configured [filePath].
+ * todo: mark this experimental
  */
-@Suppress("FunctionName")
-public inline fun LoadEnv(overwrite: Boolean = true, builderAction: DotEnvBuilder.() -> Unit) {
-    val dotEnvBuilder = DotEnvBuilder().apply(builderAction)
-    dotEnvBuilder.load(overwrite)
+public fun DotEnv(vararg filePaths: String, builderAction: DotEnvBuilder.() -> Unit): DotEnv = DotEnv {
+    files(*filePaths)
+    apply(builderAction)
 }
 
 /**
@@ -51,6 +48,21 @@ public inline fun LoadEnv(overwrite: Boolean = true, builderAction: DotEnvBuilde
 public fun DotEnv(filePath: String, vararg filesPaths: String): DotEnv = DotEnv {
     file(filePath)
     files(*filesPaths)
+}
+
+/**
+ * Loads all environment variables found for the configuration based on
+ * the given [builderAction] into the "system environment".
+ *
+ * Note that "system environment" has different meanings based on
+ * the used platform.
+ *
+ * For further information see [DotEnv.loadIntoSystemEnvironment]
+ */
+@Suppress("FunctionName")
+public inline fun LoadEnv(overwrite: Boolean = true, builderAction: DotEnvBuilder.() -> Unit) {
+    val dotEnv = DotEnv(builderAction)
+    dotEnv.loadIntoSystemEnvironment(overwrite)
 }
 
 /**
@@ -137,34 +149,6 @@ public class DotEnvBuilder @PublishedApi internal constructor() {
     public var decodeBlankValues: Boolean = true
 
     /**
-     * Specifies whether the created [DotEnv] entries should get load into
-     * the system environment. This flag WILL NOT overwrite already existing
-     * values.
-     *
-     * In order to fully overwrite the system environment use this flag in
-     * combination with [overwriteExistingSystemVariables].
-     *
-     * NOTE: "system environment" has different meanings based on the platform:
-     *  - JVM: The jvm system properties
-     *  - Native: Current process / system environment
-     *  - JS: Current process environment
-     *
-     *  `false` by default
-     */
-    public var overloadSystemEnvironment: Boolean = false
-
-    /**
-     * Specifies whether to overwrite already existing system variables when
-     * overloading the current system environment.
-     *
-     * IMPORTANT: This flag only works if [overloadSystemEnvironment] is
-     * enabled!
-     *
-     * 'true' by default
-     */
-    public var overwriteExistingSystemVariables: Boolean = true
-
-    /**
      * Specifies whether the current system environment should be included
      * as the base for created [DotEnv] instance.
      *
@@ -194,17 +178,7 @@ public class DotEnvBuilder @PublishedApi internal constructor() {
 
     @PublishedApi internal fun build(): DotEnv {
         val envMap = parseInput()
-
-        if (this.overloadSystemEnvironment) {
-            loadEnvironmentToSystem(envMap, overwriteExistingSystemVariables)
-        }
-
         return DotEnvImpl(envMap)
-    }
-
-    @PublishedApi internal fun load(overwrite: Boolean) {
-        val envMap = parseInput()
-        loadEnvironmentToSystem(envMap, overwrite)
     }
 
     private fun parseInput(): EnvMap {
@@ -220,7 +194,6 @@ public class DotEnvBuilder @PublishedApi internal constructor() {
             systemEnvMap
         )
 
-        val combinedEnv = parser.parse(filenamesOrDefault, ignoreMissingFile)
-        return combinedEnv
+        return parser.parse(filenamesOrDefault, ignoreMissingFile)
     }
 }

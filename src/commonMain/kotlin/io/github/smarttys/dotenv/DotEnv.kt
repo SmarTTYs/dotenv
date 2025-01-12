@@ -59,8 +59,12 @@ public sealed class DotEnv {
     /**
      * Load all entries from this [DotEnv] into the system environment.
      *
-     * NOTE: "System environment" refers to different objects depending on the
-     * target platform (System-Properties for JVM, Environment for Native).
+     * NOTE: "system environment" has different meanings based on the platform:
+     *  - JVM: The jvm system properties
+     *  - Native: Current process / system environment
+     *  - JS: Current process environment
+     *
+     *  @param overwrite - whether to overwrite already existing keys
      */
     public fun loadIntoSystemEnvironment(overwrite: Boolean = true): Unit = loadEnvironmentToSystem(envMap, overwrite)
 
