@@ -255,17 +255,6 @@ class TestDotEnvReading {
         assertTrue(defaultDotEnvResult.isFailure)
         assertNotNull(defaultDotEnvResult.exceptionOrNull())
 
-        val ignoreMalformedKeysDotEnv = kotlin.runCatching {
-            MalformedDotEnv {}
-        }
-
-        /**
-         * With lenient key parsing disabled and the ignoreMalformed key flag enabled
-         * results should not throw an exception and be not present in the created env
-         * instance.
-         */
-        // assertNull(ignoreMalformedKeysDotEnv["MALFORMED-KEY"])
-
         val lenientDotEnv = MalformedDotEnv {
             lenientKeyParsing = true
         }
