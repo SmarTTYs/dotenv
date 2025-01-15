@@ -81,7 +81,7 @@ internal class DotEnvParser(
          * byte array.
          *
          * If no character can be found we return null as there are no key-value
-         * pairs to process anymore.
+         * pairs left to process anymore.
          */
         var found = false
         for (index in startingIndex..byteArray.lastIndex) {
@@ -116,15 +116,18 @@ internal class DotEnvParser(
             /**
              * Skip all chars until we reached a line separator which indicates
              * the end of the comment
+             * todo: we could also just directly return now dont we?
              */
             if (byteArray[index].isLineSeparator) {
                 startingIndex = index
+                // return updateStatementStartingIndex(byteArray)
                 found = true
                 break
             }
         }
-        if (!found) return null
 
+        // return null
+        if (!found) return null
         return updateStatementStartingIndex(byteArray)
     }
 
@@ -419,7 +422,6 @@ internal class DotEnvParser(
 
         return byteArray.decodeToString(0, byteArrayPosition)
     }
-
 
     private inline fun throwInvalidKeyFormatException(
         input: ByteArray,
