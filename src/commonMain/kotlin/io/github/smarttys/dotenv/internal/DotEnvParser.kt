@@ -21,6 +21,7 @@ internal class DotEnvParser(
      * Current starting position index
      */
     private var startingIndex = 0
+    private var lastIndex = 0
     private val exportByteArray by lazy(LazyThreadSafetyMode.NONE) { EXPORT_PREFIX_BYTES }
 
     /**
@@ -28,30 +29,20 @@ internal class DotEnvParser(
      */
     private var lineCursor = LineCursor()
 
-    private fun reset() {
-        startingIndex = 0
-        lineCursor = LineCursor()
+    fun parse(filePath: String, ignoreMissingFile: Boolean): EnvMap {
+        val fileBytes = readInputFile(filePath, ignoreMissingFile) ?: return emptyMap()
+        this.lastIndex = fileBytes.lastIndex
+        return parse(fileBytes)
     }
 
-    fun parse(files: List<String>, ignoreMissingFile: Boolean): EnvMap {
-        val combinedEnv = files.fold(emptyMap<String, String>()) { map, file ->
-            val fileBytes = readInputFile(file, ignoreMissingFile) ?: return@fold map
-            val parsed = parse(fileBytes).also {
-                reset()
-            }
-
-            map + parsed
-        }
-
-        return combinedEnv
-    }
-
-    fun parse(input: ByteArray): EnvMap {
+    private fun parse(input: ByteArray): EnvMap {
         val envMap = if (includeSystemEnvironment) {
             systemEnvironmentMap.toMutableMap()
-        } else mutableMapOf()
+        } else {
+            mutableMapOf()
+        }
 
-        while (startingIndex <= input.lastIndex) {
+        while (startingIndex <= lastIndex) {
             updateStatementStartingIndex(input) ?: break
 
             val key = locateKeyName(input)
@@ -64,7 +55,6 @@ internal class DotEnvParser(
 
             envMap[key] = value
         }
-
         return envMap
     }
 
@@ -74,7 +64,25 @@ internal class DotEnvParser(
      *
      * @return - [Unit] or null if no new starting position is found
      */
-    private tailrec fun updateStatementStartingIndex(byteArray: ByteArray): Unit? {
+    private fun updateStatementStartingIndex(byteArray: ByteArray): Unit? {
+        fun skipComment(): Unit? {
+            for (index in startingIndex..lastIndex) {
+                /**
+                 * Skip all chars until we reached a line separator which indicates
+                 * the end of the comment
+                 */
+                if (byteArray[index].isLineSeparator) {
+                    startingIndex = index
+                    return updateStatementStartingIndex(byteArray)
+                }
+            }
+
+            /**
+             * If we did not find anything we can return null
+             */
+            return null
+        }
+
         /**
          * Find the first non-whitespace character in the byte array starting at
          * the current [startingIndex] and update [startingIndex] to it's position in the
@@ -83,52 +91,34 @@ internal class DotEnvParser(
          * If no character can be found we return null as there are no key-value
          * pairs left to process anymore.
          */
-        var found = false
-        for (index in startingIndex..byteArray.lastIndex) {
+        for (index in startingIndex..lastIndex) {
             val byte = byteArray[index]
             if (byte.isLineSeparator) lineCursor++
 
             val char = byte.toInt().toChar()
             if (!char.isWhitespace() && byte != 0x0.toByte()) {
                 startingIndex = index
-                found = true
 
                 /**
                  * If the found character is not the comment marker return
                  */
-                if (byte.isCommentMarker.not()) return Unit
-                break
+                return if (byte.isCommentMarker.not()) {
+                    Unit
+                } else {
+                    /**
+                     * If we did not return in the previous statement we found a
+                     * comment marker and need to skip the comment now.
+                     */
+                    skipComment()
+                }
             }
         }
 
         /**
-         * No non-whitespace character found, so we return null to break
-         * the for-loop of the calling function.
+         * No non-whitespace character or comment found, so we return
+         * null to break the for-loop of the calling function.
          */
-        if (!found) return null
-
-        /**
-         * If we did not return in the previous statement we found a
-         * comment marker and need to skip the comment now.
-         */
-        found = false
-        for (index in startingIndex..byteArray.lastIndex) {
-            /**
-             * Skip all chars until we reached a line separator which indicates
-             * the end of the comment
-             * todo: we could also just directly return now dont we?
-             */
-            if (byteArray[index].isLineSeparator) {
-                startingIndex = index
-                // return updateStatementStartingIndex(byteArray)
-                found = true
-                break
-            }
-        }
-
-        // return null
-        if (!found) return null
-        return updateStatementStartingIndex(byteArray)
+        return null
     }
 
     private fun locateKeyName(input: ByteArray): String? {
@@ -142,7 +132,7 @@ internal class DotEnvParser(
         var malformed = false
         var errorCode: KeyFormatErrorCode = MISSING_KEY_SEPARATOR_SIGN
 
-        for (index in startingIndex..input.lastIndex) {
+        for (index in startingIndex..lastIndex) {
             when (val byte = input[index]) {
                 DEFAULT_KEY_SEPARATION_MARKER, YAML_STYLE_KEY_SEPARATION_MARKER -> {
                     /**
@@ -250,7 +240,7 @@ internal class DotEnvParser(
          * as the setter won't get called at all for keys without
          * a leading space.
          */
-        for (index in startingIndex..input.lastIndex) {
+        for (index in startingIndex..lastIndex) {
             if (input[startingIndex].isWhitespace().not()) break
             startingIndex = index
         }
@@ -262,7 +252,7 @@ internal class DotEnvParser(
          */
         if (input.hasExportPrefix(startingIndex)) {
             var trailingSpaces = 0
-            for (index in startingIndex + EXPORT_PREFIX_LENGTH..input.lastIndex) {
+            for (index in startingIndex + EXPORT_PREFIX_LENGTH..lastIndex) {
                 /**
                  * Trim trailing spaces but do not count line breaks as space
                  */
@@ -312,7 +302,7 @@ internal class DotEnvParser(
 
         if (quotation == null) {
             var end = src.size
-            for (index in startingIndex..src.lastIndex) {
+            for (index in startingIndex..lastIndex) {
                 val indexByte = src[index]
 
                 /**
@@ -322,10 +312,15 @@ internal class DotEnvParser(
                  * If we found a valid comment, set the ending string index to the
                  * current index - 1 to remove the preceding whitespace from the value.
                  */
-                val isLineSeparator = indexByte.isLineSeparator
-                if (isLineSeparator || indexByte.isCommentMarker && src[index - 1].isWhitespace()) {
-                    end = if (isLineSeparator) index else index - 1
-                    break
+                when {
+                    indexByte.isLineSeparator -> {
+                        end = index
+                        break
+                    }
+                    indexByte.isCommentMarker && src[index - 1].isWhitespace() -> {
+                        end = index - 1
+                        break
+                    }
                 }
             }
 
@@ -349,7 +344,7 @@ internal class DotEnvParser(
                     /**
                      * If we find an escape character we skip the next character
                      */
-                    char.isEscape && i < src.lastIndex -> {
+                    char.isEscape && i < lastIndex -> {
                         i++
                     }
                 }
@@ -365,7 +360,7 @@ internal class DotEnvParser(
 
             startingIndex = i + 1
             return value
-        } while (i++ < src.lastIndex)
+        } while (i++ < lastIndex)
 
         throw DotEnvException("Quoted value is unterminated for key $key @ ${lineCursor.position}")
     }

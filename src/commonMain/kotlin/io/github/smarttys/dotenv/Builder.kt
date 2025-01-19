@@ -5,6 +5,9 @@ import io.github.smarttys.dotenv.internal.*
 import io.github.smarttys.dotenv.internal.DotEnvParser
 import io.github.smarttys.dotenv.internal.readEnvironmentMap
 
+@PublishedApi
+internal const val DEFAULT_ENV_FILE_NAME: String = ".env"
+
 /**
  * Creates an instance of [DotEnv] configured by the given [builderAction].
  *
@@ -22,32 +25,35 @@ import io.github.smarttys.dotenv.internal.readEnvironmentMap
  * ```
  */
 public inline fun DotEnv(builderAction: DotEnvBuilder.() -> Unit): DotEnv {
-    val dotEnvBuilder = DotEnvBuilder().apply(builderAction)
+    val dotEnvBuilder = DotEnvBuilder(DEFAULT_ENV_FILE_NAME).apply(builderAction)
+    return dotEnvBuilder.build()
+}
+
+public inline fun DotEnv(filePath: String, builderAction: DotEnvBuilder.() -> Unit): DotEnv {
+    val dotEnvBuilder = DotEnvBuilder(filePath).apply(builderAction)
     return dotEnvBuilder.build()
 }
 
 /**
- * Creates an instance of [DotEnv] for the provided [filePath] without
+ * Creates an instance of [DotEnv] for the provided [basePath] without
  * any changes to the default configuration.
  *
- * @return [DotEnv] instance with the configured [filePath].
- * todo: mark this experimental
+ * @param [basePath] for the .env file
+ * @return [DotEnv] instance with the configured [basePath].
  */
-public fun DotEnv(vararg filePaths: String, builderAction: DotEnvBuilder.() -> Unit): DotEnv = DotEnv {
-    files(*filePaths)
-    apply(builderAction)
-}
+@ExperimentalDotEnvApi
+public inline fun DotEnv(
+    basePath: String,
+    vararg overwritingPaths: String,
+    builderAction: DotEnvBuilder.() -> Unit = {}
+): DotEnv {
+    val initialEnv = DotEnv(basePath, builderAction)
+    val combinedEnv = overwritingPaths.fold(initialEnv) { env, file ->
+        val fileEnv = DotEnv(file, builderAction)
+        env + fileEnv
+    }
 
-/**
- * Creates an instance of [DotEnv] for the provided [filePath] without
- * any changes to the default configuration.
- *
- * @param [filePath] for the .env file
- * @return [DotEnv] instance with the configured [filePath].
- */
-public fun DotEnv(filePath: String, vararg filesPaths: String): DotEnv = DotEnv {
-    file(filePath)
-    files(*filesPaths)
+    return combinedEnv
 }
 
 /**
@@ -60,36 +66,30 @@ public fun DotEnv(filePath: String, vararg filesPaths: String): DotEnv = DotEnv 
  * For further information see [DotEnv.loadIntoSystemEnvironment]
  */
 @Suppress("FunctionName")
-public inline fun LoadEnv(overwrite: Boolean = true, builderAction: DotEnvBuilder.() -> Unit) {
-    val dotEnv = DotEnv(builderAction)
+public inline fun LoadEnv(filePath: String, overwrite: Boolean = true, builderAction: DotEnvBuilder.() -> Unit) {
+    val dotEnv = DotEnv(filePath, builderAction)
     dotEnv.loadIntoSystemEnvironment(overwrite)
 }
 
 /**
  * Loads all environment variables found in the file located under
- * given [filePath] into the "system environment".
+ * given [basePath] into the "system environment", overwriting with
+ * all variables found in the [overwritingPaths].
  *
  * Note that "system environment" has different meanings based on
  * the used platform.
  * */
+@OptIn(ExperimentalDotEnvApi::class)
 @Suppress("FunctionName")
-public fun LoadEnv(filePath: String, vararg filePaths: String, overwrite: Boolean = true) {
-    LoadEnv(overwrite) {
-        file(filePath)
-        files(*filePaths)
-    }
+public fun LoadEnv(basePath: String, vararg overwritingPaths: String, overwrite: Boolean = true) {
+    val dotEnv = DotEnv(basePath, *overwritingPaths)
+    dotEnv.loadIntoSystemEnvironment(overwrite)
 }
 
 /**
  * Builder of the [DotEnv] instance provided by `DotEnv { ... }` factory function.
  */
-public class DotEnvBuilder @PublishedApi internal constructor() {
-    /**
-     * List of filenames this dotenv implementation should
-     * read from
-     */
-    private val files = mutableSetOf<String>()
-
+public class DotEnvBuilder @PublishedApi internal constructor(private val filePath: String) {
     /**
      * Specifies whether missing files should be ignored and do not throw an exception on
      * parsing.
@@ -173,18 +173,8 @@ public class DotEnvBuilder @PublishedApi internal constructor() {
             field = value.removeSuffix("/") + "/"
         }
 
-    public fun file(fileName: String): DotEnvBuilder = apply { files.add(fileName) }
-    public fun files(vararg fileNames: String): DotEnvBuilder = apply { files.addAll(fileNames) }
-
     @PublishedApi internal fun build(): DotEnv {
-        val envMap = parseInput()
-        return DotEnvImpl(envMap)
-    }
-
-    private fun parseInput(): EnvMap {
         val systemEnvMap = readEnvironmentMap()
-        val filenamesOrDefault = getExpandedFilePaths(directory, files, systemEnvMap)
-
         val parser = DotEnvParser(
             lenientKeyParsing,
             ignoreDuplicateKeys,
@@ -194,6 +184,8 @@ public class DotEnvBuilder @PublishedApi internal constructor() {
             systemEnvMap
         )
 
-        return parser.parse(filenamesOrDefault, ignoreMissingFile)
+        val expandedFileName = getExpandedFilePath(directory, filePath, systemEnvMap)
+        val envMap = parser.parse(expandedFileName, ignoreMissingFile)
+        return DotEnvImpl(envMap)
     }
 }

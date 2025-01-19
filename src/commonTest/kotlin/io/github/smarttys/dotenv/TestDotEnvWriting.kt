@@ -19,9 +19,8 @@ class TestDotEnvWriting {
         }
 
         val filePath = "assets/${randomName()}"
-        val dotEnv = DotEnv {
+        val dotEnv = DotEnv("plain.env") {
             testDirectory = "./assets/"
-            file("plain.env")
 
             ignoreDuplicateKeys = true
             ignoreMalformedSubstitution = true

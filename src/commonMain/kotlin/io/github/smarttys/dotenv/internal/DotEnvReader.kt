@@ -1,6 +1,5 @@
 package io.github.smarttys.dotenv.internal
 
-import io.github.smarttys.dotenv.DotEnv
 import io.github.smarttys.dotenv.EnvMap
 import io.github.smarttys.dotenv.exception.DotEnvException
 
@@ -13,14 +12,12 @@ internal fun readInputFile(file: String, ignoreMissingFile: Boolean): ByteArray?
     } else throwMissingFileException(file)
 }
 
-internal fun getExpandedFilePaths(directory: String, files: Set<String>, systemEnvMap: EnvMap): List<String> {
-    return files.map {
-        val parsedFileName = it.removePrefix("/")
-        val expandedPath = expandVariables("FilePath", directory, false, systemEnvMap)
-        val expandedFileName = expandVariables("FileName", parsedFileName, false, systemEnvMap)
+internal fun getExpandedFilePath(directory: String, file: String, systemEnvMap: EnvMap): String {
+    val parsedFileName = file.removePrefix("/")
+    val expandedPath = expandVariables("FilePath", directory, false, systemEnvMap)
+    val expandedFileName = expandVariables("FileName", parsedFileName, false, systemEnvMap)
 
-        expandedPath + expandedFileName
-    }.ifEmpty(DotEnv::DEFAULT_FILE_LIST)
+    return expandedPath + expandedFileName
 }
 
 private fun throwMissingFileException(fileName: String): Nothing =

@@ -1,7 +1,5 @@
 package io.github.smarttys.dotenv
 
-import io.github.smarttys.dotenv.internal.*
-import io.github.smarttys.dotenv.internal.DotEnvParser
 import io.github.smarttys.dotenv.internal.loadEnvironmentToSystem
 import io.github.smarttys.dotenv.internal.marshallAndWriteEnvToFile
 import kotlin.contracts.ExperimentalContracts
@@ -69,22 +67,8 @@ public sealed class DotEnv {
     public fun loadIntoSystemEnvironment(overwrite: Boolean = true): Unit = loadEnvironmentToSystem(envMap, overwrite)
 
     public companion object {
-        private const val DEFAULT_ENV_FILE_NAME = ".env"
-        internal val DEFAULT_FILE_LIST get() = listOf(DEFAULT_ENV_FILE_NAME)
-
         public val DEFAULT: DotEnv by lazy(LazyThreadSafetyMode.NONE) {
-            val parser = DotEnvParser(
-                lenientKeyParsing = false,
-                ignoreDuplicateKeys = false,
-                decodeBlankValues = true,
-                ignoreMalformedSubstitution = false,
-                includeSystemEnvironment = false,
-                systemEnvironmentMap = emptyMap()
-            )
-
-            // safe call as we do not allow missing files
-            val fileBytes = requireNotNull(readInputFile(DEFAULT_ENV_FILE_NAME, ignoreMissingFile = false))
-            DotEnvImpl(parser.parse(fileBytes))
+            DotEnv {}
         }
     }
 }

@@ -7,10 +7,8 @@ import kotlin.test.assertTrue
 
 class TestParameterSubstitution {
 
-    private fun substitutionDotEnv(inputFile: String, ignoreMalformed: Boolean = true) = DotEnv {
+    private fun substitutionDotEnv(inputFile: String, ignoreMalformed: Boolean = true) = DotEnv(inputFile) {
         testDirectory = "./assets/substitution"
-        file(inputFile)
-
         ignoreMalformedSubstitution = ignoreMalformed
     }
 

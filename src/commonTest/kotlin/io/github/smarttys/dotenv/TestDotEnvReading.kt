@@ -7,11 +7,13 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.measureTimedValue
 
 class TestDotEnvReading {
 
     @Test
     fun example() {
+        @OptIn(ExperimentalDotEnvApi::class)
         val dotEnv = DotEnv("weird_example.env", "weird_example_2.env") {
             lenientKeyParsing = true
             ignoreMalformedSubstitution = true
@@ -23,11 +25,20 @@ class TestDotEnvReading {
     }
 
     @Test
-    fun testMissingValue() {
-        val dotEnv = DotEnv {
-            testDirectory = "./assets/"
+    fun timingTest() {
+        val test = measureTimedValue {
+            DotEnv("plain.env") {
+                testDirectory = "./assets/"
+            }
+        }
+        println(test.value.envMap.size)
+        println(test.duration)
+    }
 
-            file("plain.env")
+    @Test
+    fun testMissingValue() {
+        val dotEnv = DotEnv("plain.env") {
+            testDirectory = "./assets/"
         }
 
         assertNull(dotEnv["missingKey"])
@@ -45,10 +56,8 @@ class TestDotEnvReading {
 
     @Test
     fun testValueTransformation() {
-        val dotEnv = DotEnv {
+        val dotEnv = DotEnv("plain.env") {
             testDirectory = "./assets/"
-
-            file("plain.env")
         }
 
         val value = dotEnv["TEST", { it.lowercase() }]
@@ -59,9 +68,8 @@ class TestDotEnvReading {
     fun testSystemOverloading() {
         loadEnvironmentToSystem(mapOf("KEY" to "EXISTING", "KEY_2" to "SECOND_EXISTING"))
 
-        val nonOverwritingDotEnv = DotEnv {
+        val nonOverwritingDotEnv = DotEnv("plain.env") {
             testDirectory = "./assets/"
-            file("plain.env")
         }
 
         assertEquals("VALUE", nonOverwritingDotEnv["KEY"])
@@ -70,9 +78,8 @@ class TestDotEnvReading {
         /**
          * Loads properties into environment
          */
-        LoadEnv {
+        LoadEnv("plain.env") {
             testDirectory = "./assets/"
-            file("plain.env")
         }
 
         assertEquals(nonOverwritingDotEnv["KEY"], readFromSystem("KEY"))
@@ -82,10 +89,8 @@ class TestDotEnvReading {
     fun testSystemEnvironmentInclusion() {
         loadEnvironmentToSystem(mapOf("SYSTEM_ENV" to "TEST"))
 
-        val dotEnv = DotEnv {
+        val dotEnv = DotEnv("substitution.env") {
             testDirectory = "./assets/substitution"
-            file("substitution.env")
-
             includeSystemEnvironment = true
         }
 
@@ -97,9 +102,8 @@ class TestDotEnvReading {
         /**
          * Load all key, value pairs from the file into the system
          */
-        LoadEnv {
+        LoadEnv("plain.env") {
             testDirectory = "./assets/"
-            file("plain.env")
         }
 
         assertEquals("VALUE", readFromSystem("KEY"))
@@ -107,9 +111,8 @@ class TestDotEnvReading {
 
     @Test
     fun testLoadingIntoSystemEnvironmentAfterwards() {
-        val dotEnv = DotEnv {
+        val dotEnv = DotEnv("plain.env") {
             testDirectory = "./assets/"
-            file("plain.env")
         }
 
         /**
@@ -123,9 +126,8 @@ class TestDotEnvReading {
 
     @Test
     fun testDelegationNamingConvention() {
-        val dotEnv = DotEnv {
+        val dotEnv = DotEnv("plain.env") {
             testDirectory = "./assets"
-            file("plain.env")
         }
 
         val test by dotEnv
@@ -148,12 +150,11 @@ class TestDotEnvReading {
             )
         )
 
-        val dotEnv = DotEnv {
+        val dotEnv = DotEnv("\${FILE_NAME}") {
             /**
              * In this case ASSET_DIR will get expanded to "assets"
              */
             directory = "\${ASSET_DIR}"
-            file("\${FILE_NAME}")
         }
 
         assertEquals("VALUE", dotEnv["KEY"])
@@ -206,10 +207,8 @@ class TestDotEnvReading {
 
     @Test
     fun testIgnoreBlankOption() {
-        val dotEnv = DotEnv {
+        val dotEnv = DotEnv("ignore_empty_option_test.env") {
             testDirectory = "./assets/options"
-            file("ignore_empty_option_test.env")
-
             decodeBlankValues = false
         }
 
@@ -222,9 +221,7 @@ class TestDotEnvReading {
     @Test
     fun testDuplicateKeys() {
         val dotEnv = runCatching {
-            DotEnv {
-                file("assets/duplicate-keys.test.env")
-
+            DotEnv("assets/duplicate-keys.test.env") {
                 ignoreDuplicateKeys = false
             }
         }
@@ -238,10 +235,8 @@ class TestDotEnvReading {
     @Test
     fun testMalformedKeys() {
         @Suppress("TestFunctionName")
-        fun MalformedDotEnv(builder: DotEnvBuilder.() -> Unit) = DotEnv {
-            files("malformed_key_options_test.env")
+        fun MalformedDotEnv(builder: DotEnvBuilder.() -> Unit) = DotEnv("malformed_key_options_test.env") {
             testDirectory = "./assets/options"
-
             apply(builder)
         }
 
@@ -266,11 +261,10 @@ class TestDotEnvReading {
         assertNotNull(lenientDotEnv["MALFORMED-KEY"])
     }
 
+    @OptIn(ExperimentalDotEnvApi::class)
     @Test
     fun testReadingMultipleFiles() {
-        val dotEnv = DotEnv {
-            files("plain.env", "comments.env")
-
+        val dotEnv = DotEnv("plain.env", "comments.env") {
             testDirectory = "./assets"
             ignoreMissingFile = false
         }
@@ -289,13 +283,11 @@ class TestDotEnvReading {
             put("PORT", "3306")
         }
 
-        val testEnvFile = DotEnv {
+        val testEnvFile = DotEnv("overwriting/test.env") {
             testDirectory = "./assets"
-            file("overwriting/test.env")
         }
-        val stagingEnvFile = DotEnv {
+        val stagingEnvFile = DotEnv("overwriting/staging.env") {
             testDirectory = "./assets"
-            file("overwriting/staging.env")
         }
         val combinedEnv = testEnvFile + stagingEnvFile
 
@@ -308,9 +300,8 @@ class TestDotEnvReading {
     @Test
     fun testMissingFileException() {
         val result = runCatching {
-            DotEnv {
+            DotEnv("missing_file.env") {
                 testDirectory = "./assets"
-                file("missing_file.env")
                 ignoreMissingFile = false
             }
         }
@@ -336,9 +327,8 @@ class TestDotEnvReading {
             )
         }
 
-        val dotEnv = DotEnv {
+        val dotEnv = DotEnv("plain.env") {
             testDirectory = "./assets"
-            file("plain.env")
         }
 
         val replaceSeparatorValue = dotEnv["PRIVATE_KEY"]?.replace("\r\n", "\n")
@@ -371,9 +361,8 @@ class TestDotEnvReading {
     }
 
     private fun loadAndCompareValues(path: String, fileName: String, expectedValues: EnvMap) {
-        val dotEnv = DotEnv {
+        val dotEnv = DotEnv(fileName) {
             testDirectory = path
-            file(fileName)
         }
         loadAndCompareValues(dotEnv, expectedValues)
     }
