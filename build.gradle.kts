@@ -37,8 +37,6 @@ android {
 
 kotlin {
     explicitApiWarning()
-
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
     compilerOptions {
         allWarningsAsErrors = true
     }
