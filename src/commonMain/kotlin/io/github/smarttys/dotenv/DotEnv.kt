@@ -68,7 +68,7 @@ public sealed class DotEnv {
 
     public companion object {
         public val DEFAULT: DotEnv by lazy(LazyThreadSafetyMode.NONE) {
-            DotEnv {}
+            DotEnv(DEFAULT_ENV_FILE_NAME)
         }
     }
 }
