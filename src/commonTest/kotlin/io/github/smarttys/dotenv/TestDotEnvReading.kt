@@ -12,30 +12,6 @@ import kotlin.time.measureTimedValue
 class TestDotEnvReading {
 
     @Test
-    fun example() {
-        @OptIn(ExperimentalDotEnvApi::class)
-        val dotEnv = DotEnv("weird_example.env", "weird_example_2.env") {
-            lenientKeyParsing = true
-            ignoreMalformedSubstitution = true
-
-            testDirectory = "./assets/"
-        }
-        println(dotEnv.envMap)
-        println(dotEnv.envMap.values)
-    }
-
-    @Test
-    fun timingTest() {
-        val test = measureTimedValue {
-            DotEnv("plain.env") {
-                testDirectory = "./assets/"
-            }
-        }
-        println(test.value.envMap.size)
-        println(test.duration)
-    }
-
-    @Test
     fun testMissingValue() {
         val dotEnv = DotEnv("plain.env") {
             testDirectory = "./assets/"
@@ -261,8 +237,8 @@ class TestDotEnvReading {
         assertNotNull(lenientDotEnv["MALFORMED-KEY"])
     }
 
-    @OptIn(ExperimentalDotEnvApi::class)
     @Test
+    @OptIn(ExperimentalDotEnvApi::class)
     fun testReadingMultipleFiles() {
         val dotEnv = DotEnv("plain.env", "comments.env") {
             testDirectory = "./assets"
@@ -274,6 +250,21 @@ class TestDotEnvReading {
 
         // from comments.env
         assertEquals("foo", dotEnv["NO_COMMENT_IN_UNQUOTED"])
+    }
+
+    @Test
+    @OptIn(ExperimentalDotEnvApi::class)
+    fun testValueOverwritingHelper() {
+        val expectedValues = buildMap {
+            put("HOST", "staging.test.io")
+            put("PORT", "3306")
+        }
+
+        val combinedDotEnv = DotEnv("overwriting/test.env", "overwriting/staging.env") {
+            testDirectory = "./assets"
+        }
+
+        loadAndCompareValues(combinedDotEnv, expectedValues)
     }
 
     @Test
