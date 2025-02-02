@@ -8,5 +8,5 @@ repositories {
 
 dependencies {
     implementation(libs.gradlePlugin.kover)
-    implementation(libs.gradlePlugin.dokka)
+    // implementation(libs.gradlePlugin.dokka)
 }

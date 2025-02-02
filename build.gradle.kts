@@ -1,3 +1,4 @@
+import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests
@@ -5,6 +6,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest
 import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest
+import java.net.URI
 
 plugins {
     alias(libs.plugins.ktlint)
@@ -16,7 +18,7 @@ plugins {
 
     id("publication-conventions")
     id("kover-conventions")
-    id("dokka-conventions")
+    alias(libs.plugins.dokka)
 }
 
 group = "io.github.smarttys"
@@ -109,5 +111,24 @@ tasks {
 
     withType<KotlinNativeSimulatorTest> {
         enabled = false
+    }
+}
+
+tasks.dokkaGeneratePublicationHtml {
+    outputDirectory = layout.buildDirectory.dir("documentation/html")
+}
+
+tasks.withType<DokkaTaskPartial> {
+    moduleName = project.name
+    moduleVersion = project.version.toString()
+
+    dokkaSourceSets.configureEach {
+        skipEmptyPackages = true
+        skipDeprecated = false
+
+        sourceLink {
+            localDirectory = projectDir.resolve("src")
+            remoteUrl = URI("https://github.com/SmarTTYs/dotenv").toURL()
+        }
     }
 }
