@@ -9,7 +9,7 @@ val javadocJar by tasks.registering(Jar::class) {
 
 publishing {
     repositories {
-        maven("https://maven.pkg.github.com/SmarTTYs/env-kmp") {
+        maven("https://maven.pkg.github.com/SmarTTYs/dotenv") {
             name = "GitHubPackages"
             credentials {
                 username = project.findProperty("gpr.user") as String? ?: System.getenv("USERNAME")
