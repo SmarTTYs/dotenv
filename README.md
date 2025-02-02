@@ -53,9 +53,7 @@ PORT=8080
 Then in your application create a new DotEnv instance...
 ````kotlin
 // create new configured DotEnv instance
-val dotEnv = DotEnv {
-    file("file-name")
-}
+val dotEnv = DotEnv("file-name")
 
 val s3Bucket = dotEnv["S3_BUCKET"]
 
@@ -200,14 +198,10 @@ The format and options are the same as when loading an ``.env`` file into a DotE
  * Load found environment variables to system environment and overwrite already
  * existing keys
  */
-LoadEnv {
-    file(".env")
-}
+LoadEnv(".env")
 
 // in order to not overwrite existing variables use:
-LoadEnv(overwrite = false) {
-    file(".env")
-}
+LoadEnv(".env", overwrite = false)
 ````
 All the [configurations options](#configuration-options) listed below can be used here as well.
 
@@ -218,18 +212,14 @@ A created DotEnv instance can be written directly to a file.
 Values are written **expanded** and comments are **not preserved**.
 
 ````kotlin
-val dotEnv = DotEnv {
-    file("ignore_empty_option_test.env")
-}
+val dotEnv = DotEnv("ignore_empty_option_test.env")
 dotEnv.write("target-file-path.env")
 ````
 
 This can also be useful to merge more than one file into a single one:
 
 ````kotlin
-val dotEnv = DotEnv {
-    files("first_file.env", "second_file.env")
-}
+val dotEnv = DotEnv("first_file.env", "second_file.env")
 
 // Will produce one single combined file
 dotEnv.write("target-file-path.env")
@@ -261,22 +251,6 @@ val dotEnv = DotEnv {
 }
 ````
 
-#### files / file
-
-Default: ``.env``
-
-Specify one or multiple ``.env`` files from which environment variable should get read.
-
-````kotlin
-val dotEnv = DotEnv {
-    // Define one .env file to read from
-    file("your-env-file.env")
-    
-    // Define multiple .env files to read from
-    files("first-env-file.env", "second-env-file.env")
-}
-````
-
 #### ignoreMissingFile
 Default: ``false``
 
@@ -286,18 +260,6 @@ environment variables from other files or the system environment.
 ````kotlin
 val dotEnv = DotEnv {
     ignoreMissingFile = false
-}
-````
-
-#### ignoreMalformedKeys
-Default: ``false``
-
-Do not throw when the .env file contains malformed keys. Malformed keys will be ignored
-and not loaded into the environment / DotEnv instance.  
-
-````kotlin
-val dotEnv = DotEnv {
-    ignoreMalformedKey = false
 }
 ````
 
@@ -345,40 +307,6 @@ Whether to include blank values into the created DotEnv instance.
 ````kotlin
 val dotEnv = DotEnv {
     ignoreBlankValues = false
-}
-````
-
-##### overloadSystemEnvironment
-Default: ``false``
-
-This option is the same as using the [LoadEnv](#load-into-system-environment) function, 
-but still creates a separate DotEnv instance.
-
-This flag does **NOT** allow controlling whether to overwrite existing variables.
-In able to do this see [overwriteExistingSystemVariables](#overwriteexistingsystemvariables)
-
-````kotlin
-val dotEnv = DotEnv {
-    overloadSystemEnvironment = false
-}
-````
-
-##### overwriteExistingSystemVariables
-Default: ``true``
-
-Specifies whether to overwrite already existing system variables when 
-overloading the current system environment.
-
-This flag only works if [overloadSystemEnvironment](#overloadSystemEnvironment) is
-enabled.
-
-````kotlin
-val dotEnv = DotEnv {
-    /**
-     * Load into environment but do not overwrite existing keys
-     */
-    overloadSystemEnvironment = true
-    overwriteExistingSystemVariables = false
 }
 ````
 

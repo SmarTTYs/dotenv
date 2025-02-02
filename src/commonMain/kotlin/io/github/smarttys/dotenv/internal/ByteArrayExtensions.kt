@@ -50,7 +50,7 @@ internal inline val Byte.isCommentMarker get() = this == COMMENT_MARKER
  */
 internal inline val Byte.isExpansionMarker get() = this == EXPANSION_MARKER
 
-internal inline val Byte?.isDoubleQuote inline get() = this == DOUBLE_QUOTE_PREFIX
+internal inline val Byte.isDoubleQuote inline get() = this == DOUBLE_QUOTE_PREFIX
 internal inline val Byte?.isSingleQuote inline get() = this == SINGLE_QUOTE_PREFIX
 
 internal fun ByteArray.locateQuote(index: Int): Byte? {

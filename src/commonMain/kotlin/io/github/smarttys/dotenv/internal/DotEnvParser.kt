@@ -3,19 +3,17 @@ package io.github.smarttys.dotenv.internal
 import io.github.smarttys.dotenv.EnvMap
 import io.github.smarttys.dotenv.exception.DotEnvException
 import io.github.smarttys.dotenv.exception.INVALID_KEY_FORMAT
-import io.github.smarttys.dotenv.exception.InvalidKeyFormatException
 import io.github.smarttys.dotenv.exception.KeyFormatErrorCode
 import io.github.smarttys.dotenv.exception.MISSING_KEY_SEPARATOR_SIGN
 
 internal class DotEnvParser(
     private val lenientKeyParsing: Boolean,
-    private val ignoreMalformedKeys: Boolean,
     private val ignoreDuplicateKeys: Boolean,
 
     private val decodeBlankValues: Boolean,
     private val ignoreMalformedSubstitution: Boolean,
-    private val includeSystemEnvironment: Boolean,
 
+    private val includeSystemEnvironment: Boolean,
     private val systemEnvironmentMap: EnvMap
 ) {
 
@@ -23,6 +21,7 @@ internal class DotEnvParser(
      * Current starting position index
      */
     private var startingIndex = 0
+    private var lastIndex = 0
     private val exportByteArray by lazy(LazyThreadSafetyMode.NONE) { EXPORT_PREFIX_BYTES }
 
     /**
@@ -30,29 +29,32 @@ internal class DotEnvParser(
      */
     private var lineCursor = LineCursor()
 
-    fun parse(input: ByteArray): EnvMap {
+    fun parse(filePath: String, ignoreMissingFile: Boolean): EnvMap {
+        val fileBytes = readInputFile(filePath, ignoreMissingFile) ?: return emptyMap()
+        this.lastIndex = fileBytes.lastIndex
+        return parse(fileBytes)
+    }
+
+    private fun parse(input: ByteArray): EnvMap {
         val envMap = if (includeSystemEnvironment) {
             systemEnvironmentMap.toMutableMap()
-        } else mutableMapOf()
+        } else {
+            mutableMapOf()
+        }
 
-        while (startingIndex <= input.lastIndex) {
+        while (startingIndex <= lastIndex) {
             updateStatementStartingIndex(input) ?: break
 
             val key = locateKeyName(input)
             val value = extractAndParseValue(key, input, envMap)
 
             if (key == null || this.decodeBlankValues.not() && value.isBlank()) continue
-
-            /**
-             *
-             */
             if (!this.ignoreDuplicateKeys && envMap.containsKey(key)) {
                 throw DotEnvException("Found duplicate key in env file: $key")
             }
 
             envMap[key] = value
         }
-
         return envMap
     }
 
@@ -62,58 +64,61 @@ internal class DotEnvParser(
      *
      * @return - [Unit] or null if no new starting position is found
      */
-    private tailrec fun updateStatementStartingIndex(byteArray: ByteArray): Unit? {
+    private fun updateStatementStartingIndex(byteArray: ByteArray): Unit? {
+        fun skipComment(): Unit? {
+            for (index in startingIndex..lastIndex) {
+                /**
+                 * Skip all chars until we reached a line separator which indicates
+                 * the end of the comment
+                 */
+                if (byteArray[index].isLineSeparator) {
+                    startingIndex = index
+                    return updateStatementStartingIndex(byteArray)
+                }
+            }
+
+            /**
+             * If we did not find anything we can return null
+             */
+            return null
+        }
+
         /**
          * Find the first non-whitespace character in the byte array starting at
          * the current [startingIndex] and update [startingIndex] to it's position in the
          * byte array.
          *
          * If no character can be found we return null as there are no key-value
-         * pairs to process anymore.
+         * pairs left to process anymore.
          */
-        var found = false
-        for (index in startingIndex..byteArray.lastIndex) {
+        for (index in startingIndex..lastIndex) {
             val byte = byteArray[index]
             if (byte.isLineSeparator) lineCursor++
 
             val char = byte.toInt().toChar()
             if (!char.isWhitespace() && byte != 0x0.toByte()) {
                 startingIndex = index
-                found = true
 
                 /**
                  * If the found character is not the comment marker return
                  */
-                if (byte.isCommentMarker.not()) return Unit
-                break
+                return if (byte.isCommentMarker.not()) {
+                    Unit
+                } else {
+                    /**
+                     * If we did not return in the previous statement we found a
+                     * comment marker and need to skip the comment now.
+                     */
+                    skipComment()
+                }
             }
         }
 
         /**
-         * No non-whitespace character found, so we return null to break
-         * the for-loop of the calling function.
+         * No non-whitespace character or comment found, so we return
+         * null to break the for-loop of the calling function.
          */
-        if (!found) return null
-
-        /**
-         * If we did not return in the previous statement we found a
-         * comment marker and need to skip the comment now.
-         */
-        found = false
-        for (index in startingIndex..byteArray.lastIndex) {
-            /**
-             * Skip all chars until we reached a line separator which indicates
-             * the end of the comment
-             */
-            if (byteArray[index].isLineSeparator) {
-                startingIndex = index
-                found = true
-                break
-            }
-        }
-        if (!found) return null
-
-        return updateStatementStartingIndex(byteArray)
+        return null
     }
 
     private fun locateKeyName(input: ByteArray): String? {
@@ -125,13 +130,9 @@ internal class DotEnvParser(
         var key: String? = null
         var offset = input.size
         var malformed = false
-
-        /**
-         *
-         */
         var errorCode: KeyFormatErrorCode = MISSING_KEY_SEPARATOR_SIGN
 
-        for (index in startingIndex..input.lastIndex) {
+        for (index in startingIndex..lastIndex) {
             when (val byte = input[index]) {
                 DEFAULT_KEY_SEPARATION_MARKER, YAML_STYLE_KEY_SEPARATION_MARKER -> {
                     /**
@@ -151,9 +152,26 @@ internal class DotEnvParser(
                     key = input.decodeToString(startingIndex, index)
                     break
                 }
-                '_'.code.toByte() -> continue
+                '_'.code.toByte() -> {
+                    /**
+                     * The first character should be a letter
+                     */
+                    if (index == startingIndex) {
+                        malformed = lenientKeyParsing.not()
+                    }
+                    continue
+                }
                 else -> {
-                    if (byte.toInt().toChar().isLetterOrDigit()) continue
+                    val byteChar = byte.toInt().toChar()
+                    if (byteChar.isLetterOrDigit()) {
+                        /**
+                         * The first character should be a letter
+                         */
+                        if (index == startingIndex && byteChar.isDigit()) {
+                            malformed = lenientKeyParsing.not()
+                        }
+                        continue
+                    }
 
                     /**
                      * We set the malformed flag to the opposite of the [lenientKeyParsing]
@@ -174,14 +192,12 @@ internal class DotEnvParser(
         }
 
         if (key == null) {
-            if (!this.ignoreMalformedKeys) {
-                when (errorCode) {
-                    INVALID_KEY_FORMAT -> throwInvalidKeyFormatException(input, offset - 1) { malformedKey ->
-                        "Malformed or blank environment variable key near '$malformedKey' @ line ${lineCursor.position}"
-                    }
-                    MISSING_KEY_SEPARATOR_SIGN -> throwInvalidKeyFormatException(input, offset) { malformedKey ->
-                        "Missing key separation sign ('=' / ':') for key '$malformedKey' @ line ${lineCursor.position}"
-                    }
+            when (errorCode) {
+                INVALID_KEY_FORMAT -> throwInvalidKeyFormatException(input, offset - 1) { malformedKey ->
+                    "Malformed or blank environment variable key near '$malformedKey' @ line ${lineCursor.position}"
+                }
+                MISSING_KEY_SEPARATOR_SIGN -> throwInvalidKeyFormatException(input, offset) { malformedKey ->
+                    "Missing key separation sign ('=' / ':') for key '$malformedKey' @ line ${lineCursor.position}"
                 }
             }
             return null
@@ -224,7 +240,7 @@ internal class DotEnvParser(
          * as the setter won't get called at all for keys without
          * a leading space.
          */
-        for (index in startingIndex..input.lastIndex) {
+        for (index in startingIndex..lastIndex) {
             if (input[startingIndex].isWhitespace().not()) break
             startingIndex = index
         }
@@ -236,7 +252,7 @@ internal class DotEnvParser(
          */
         if (input.hasExportPrefix(startingIndex)) {
             var trailingSpaces = 0
-            for (index in startingIndex + EXPORT_PREFIX_LENGTH..input.lastIndex) {
+            for (index in startingIndex + EXPORT_PREFIX_LENGTH..lastIndex) {
                 /**
                  * Trim trailing spaces but do not count line breaks as space
                  */
@@ -250,15 +266,6 @@ internal class DotEnvParser(
              */
             if (trailingSpaces > 0) startingIndex += (EXPORT_PREFIX_LENGTH + trailingSpaces)
         }
-    }
-
-    private inline fun throwInvalidKeyFormatException(
-        input: ByteArray,
-        keyEndIndex: Int,
-        crossinline messageBuilder: (key: String) -> String
-    ) {
-        val malformedKey = input.decodeToString(startingIndex, keyEndIndex)
-        throw InvalidKeyFormatException(messageBuilder(malformedKey))
     }
 
     private fun extractAndParseValue(key: String?, src: ByteArray, envMap: EnvMap): String {
@@ -284,16 +291,18 @@ internal class DotEnvParser(
                      * Single-quoted (') values are used literally
                      * Unquoted and double-quoted (") values have parameter expansion applied.
                      */
-                    if (quotation.isSingleQuote.not()) {
+                    if (quotation.isSingleQuote) {
+                        decoded
+                    } else {
                         expandVariables(key, decoded, ignoreMalformedSubstitution, envMap)
-                    } else decoded
+                    }
                 }
             }
         }
 
         if (quotation == null) {
             var end = src.size
-            for (index in startingIndex..src.lastIndex) {
+            for (index in startingIndex..lastIndex) {
                 val indexByte = src[index]
 
                 /**
@@ -303,10 +312,15 @@ internal class DotEnvParser(
                  * If we found a valid comment, set the ending string index to the
                  * current index - 1 to remove the preceding whitespace from the value.
                  */
-                val isLineSeparator = indexByte.isLineSeparator
-                if (isLineSeparator || indexByte.isCommentMarker && src[index - 1].isWhitespace()) {
-                    end = if (isLineSeparator) index else index - 1
-                    break
+                when {
+                    indexByte.isLineSeparator -> {
+                        end = index
+                        break
+                    }
+                    indexByte.isCommentMarker && src[index - 1].isWhitespace() -> {
+                        end = index - 1
+                        break
+                    }
                 }
             }
 
@@ -322,7 +336,6 @@ internal class DotEnvParser(
         var i = ++startingIndex
         do {
             val char = src[i]
-
             if (char != quotation) {
                 when {
                     char.isLineSeparator -> {
@@ -331,7 +344,7 @@ internal class DotEnvParser(
                     /**
                      * If we find an escape character we skip the next character
                      */
-                    char.isEscape && i < src.lastIndex -> {
+                    char.isEscape && i < lastIndex -> {
                         i++
                     }
                 }
@@ -347,7 +360,7 @@ internal class DotEnvParser(
 
             startingIndex = i + 1
             return value
-        } while (i++ < src.lastIndex)
+        } while (i++ < lastIndex)
 
         throw DotEnvException("Quoted value is unterminated for key $key @ ${lineCursor.position}")
     }
@@ -359,15 +372,13 @@ internal class DotEnvParser(
                  * Common shell escape sequences including \n, \r, \t, and \\ are
                  * supported in double-quoted values.
                  */
-                val char = when (charByte) {
+                when (charByte) {
                     'b'.code.toByte() -> 0x8.toByte() // 8
                     't'.code.toByte() -> 0x9.toByte() // 9
                     'n'.code.toByte() -> 0xA.toByte() // 10
                     'r'.code.toByte() -> 0xD.toByte() // 13
                     else -> charByte
                 }
-
-                char
             }
         } else decodeAndExpandEscapes(src, startIndex, endIndex) { charByte ->
             /**
@@ -405,5 +416,14 @@ internal class DotEnvParser(
         }
 
         return byteArray.decodeToString(0, byteArrayPosition)
+    }
+
+    private inline fun throwInvalidKeyFormatException(
+        input: ByteArray,
+        keyEndIndex: Int,
+        crossinline messageBuilder: (key: String) -> String
+    ) {
+        val malformedKey = input.decodeToString(startingIndex, keyEndIndex)
+        throw DotEnvException(messageBuilder(malformedKey))
     }
 }

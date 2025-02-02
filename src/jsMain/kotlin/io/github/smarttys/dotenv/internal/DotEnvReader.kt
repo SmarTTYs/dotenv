@@ -26,9 +26,9 @@ internal external interface ProcessEnv : Dict<String>
 
 internal external interface Dict<T>
 
-internal inline operator fun <T> Dict<T>.get(key: String): T? = this.asDynamic()[key] as? T
-internal inline operator fun <T> Dict<T>.set(key: String, value: T?) { this.asDynamic()[key] = value }
-internal inline fun <T> Dict<T>.contains(key: String) = this[key] != null
+internal operator fun <T> Dict<T>.get(key: String): T? = this.asDynamic()[key] as? T
+internal operator fun <T> Dict<T>.set(key: String, value: T?) { this.asDynamic()[key] = value }
+internal fun <T> Dict<T>.contains(key: String) = this[key] != null
 
 private interface Entry
 private val Entry.key get() = this.asDynamic()[0] as String

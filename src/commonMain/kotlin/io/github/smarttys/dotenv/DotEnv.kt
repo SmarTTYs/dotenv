@@ -1,14 +1,11 @@
 package io.github.smarttys.dotenv
 
-import io.github.smarttys.dotenv.internal.DotEnvParser
-import io.github.smarttys.dotenv.internal.DotEnvReader
 import io.github.smarttys.dotenv.internal.loadEnvironmentToSystem
 import io.github.smarttys.dotenv.internal.marshallAndWriteEnvToFile
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 import kotlin.reflect.KProperty
 
-/**
- *
- */
 internal typealias EnvMap = Map<String, String>
 
 /**
@@ -47,7 +44,9 @@ public sealed class DotEnv {
      * Returns the value for given [key], or throws an [NoSuchElementException] if no
      * such key is present.
      */
-    public fun getOrThrow(key: String): String = get(key) ?: throwNoSuchElementException(key)
+    public fun getOrThrow(key: String): String = requireValue(get(key)) {
+        "Key $key is missing in this DotEnv instance!"
+    }
 
     /**
      * Returns the value for the given [key] if the value is present. Otherwise, returns
@@ -58,28 +57,18 @@ public sealed class DotEnv {
     /**
      * Load all entries from this [DotEnv] into the system environment.
      *
-     * NOTE: "System environment" refers to different objects depending on the
-     * target platform (System-Properties for JVM, Environment for Native).
+     * NOTE: "system environment" has different meanings based on the platform:
+     *  - JVM: The jvm system properties
+     *  - Native: Current process / system environment
+     *  - JS: Current process environment
+     *
+     *  @param overwrite - whether to overwrite already existing keys
      */
     public fun loadIntoSystemEnvironment(overwrite: Boolean = true): Unit = loadEnvironmentToSystem(envMap, overwrite)
 
     public companion object {
-        private const val DEFAULT_ENV_FILE_NAME = ".env"
-        internal val DEFAULT_FILE_LIST get() = listOf(DEFAULT_ENV_FILE_NAME)
-
         public val DEFAULT: DotEnv by lazy(LazyThreadSafetyMode.NONE) {
-            val reader = DotEnvReader(DEFAULT_FILE_LIST, false)
-            val parser = DotEnvParser(
-                lenientKeyParsing = false,
-                ignoreMalformedKeys = false,
-                ignoreDuplicateKeys = false,
-                decodeBlankValues = true,
-                ignoreMalformedSubstitution = false,
-                includeSystemEnvironment = false,
-                systemEnvironmentMap = emptyMap()
-            )
-
-            DotEnvImpl(parser.parse(reader.readInputBytes()))
+            DotEnv(DEFAULT_ENV_FILE_NAME)
         }
     }
 }
@@ -141,5 +130,17 @@ private fun String.camelToUpperSnakeCase() = fold(StringBuilder(length shl 1)) {
     } else acc.append(char.uppercaseChar())
 }.toString()
 
-private fun throwNoSuchElementException(key: String): Nothing =
-    throw NoSuchElementException("Key $key is missing in this DotEnv instance!")
+@OptIn(ExperimentalContracts::class)
+private inline fun <T : Any> requireValue(value: T?, lazyMessage: () -> Any): T {
+    contract {
+        returns() implies (value != null)
+    }
+
+    if (value == null) {
+        val message = lazyMessage()
+        throw NoSuchElementException(message.toString())
+    } else {
+        return value
+    }
+}
+
