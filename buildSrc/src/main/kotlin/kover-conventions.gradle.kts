@@ -1,30 +1,24 @@
+import kotlinx.kover.gradle.plugin.dsl.AggregationType
+import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
+
 plugins {
     id("org.jetbrains.kotlinx.kover")
 }
 
-koverReport {
-    defaults {
-        html {
-            title = "DotEnv HTML Report"
-            onCheck = false
-            setReportDir(layout.buildDirectory.dir("kover-reports/html-result"))
-        }
 
-        verify {
-            onCheck = true
+kover {
+    reports.total.html {
+        title = "DotEnv HTML Report"
+        onCheck = false
+        htmlDir = layout.buildDirectory.dir("kover-reports/html-result")
+    }
 
-            rule("Minimal line coverage rate in percents") {
-                isEnabled = true
+    reports.verify.rule("Minimal line coverage rate in percents") {
+        bound {
+            minValue = 70
 
-                entity = kotlinx.kover.gradle.plugin.dsl.GroupingEntityType.APPLICATION
-
-                bound {
-                    minValue = 70
-
-                    metric = kotlinx.kover.gradle.plugin.dsl.MetricType.LINE
-                    aggregation = kotlinx.kover.gradle.plugin.dsl.AggregationType.COVERED_PERCENTAGE
-                }
-            }
+            coverageUnits = CoverageUnit.LINE
+            aggregationForGroup = AggregationType.COVERED_PERCENTAGE
         }
     }
 }

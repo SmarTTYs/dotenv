@@ -1,11 +1,11 @@
 [versions]
 agp = "8.5.0"
 kotlin-version = "2.1.0"
-ktlint-version = "11.6.1"
-detekt-version = "1.23.1"
+ktlint-version = "12.1.2"
+detekt-version = "1.23.7"
 dokka-version = "2.0.0"
-kover-version = "0.7.4"
-compatbility-validator = "0.16.2"
+kover-version = "0.9.1"
+compatbility-validator = "0.17.0"
 
 android-minSdk = "24"
 android-compileSdk = "34"
